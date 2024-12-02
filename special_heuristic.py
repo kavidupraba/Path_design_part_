@@ -1,5 +1,10 @@
 import numpy as np
 
+'''
+Top Horizontal Wall (ytop): Row 51
+Bottom Horizontal Wall (ybot): Row 7
+Vertical Wall (minx): Column 29
+'''
 def heuristic(current_n,goal_n,trow,brow,mcol,typeh="manhattan",move=(0,1)):
     difference_v=np.array(current_n)-np.array(goal_n)
     match typeh:
@@ -7,72 +12,65 @@ def heuristic(current_n,goal_n,trow,brow,mcol,typeh="manhattan",move=(0,1)):
             magnitude=np.linalg.norm(difference_v,ord=1)
         case _:
             magnitude = np.linalg.norm(difference_v, ord=2)
-    x=int(current_n[0])
-    y=int(current_n[1])
-    #I SAW THAT ROW NUMBER'S ARE DIFFERENT FOR THE ROW
-    m_row=list(range(59,-1,-1))
-    r_row=list(range(0,60,1))
-    r_index=r_row.index(x)
-    x=m_row[r_index]#this will fix the issue somewhat
+    x=current_n[0]
+    y=current_n[1]
 
-    if mcol<y:
-        if brow<x<trow:
-            difference_from_top=trow-x
-            difference_from_bot=abs(brow-x)
-            if difference_from_top>difference_from_bot:#close to bottom
-                match move:
-                    case (1,0):#going down reduce the distance
-                        magnitude=magnitude-difference_from_bot
-                    case (-1,0):#going up discourage going up
-                        magnitude=magnitude+difference_from_bot
-                    case (0,1):#going right discourage going right
-                        magnitude=magnitude+10
-                    case (0,-1):#going left recode the distance
-                        magnitude=magnitude-1
-                    case _:
-                        magnitude=magnitude
+    gx=goal_n[0]
+    gy=goal_n[1]
 
-            else:#close to top
-                match move:
-                    case (1, 0):  # going down discourage going down
-                        magnitude = magnitude + difference_from_top
-                    case (-1, 0):  # going up reduce the distance
-                        magnitude = magnitude - difference_from_top
-                    case (0, 1):  # going right discourage going right
-                        magnitude = magnitude + 10
-                    case (0, -1):  # going left recode the distance
-                        magnitude = magnitude - 1
-                    case _:
-                        magnitude = magnitude
+    top_row_of_h=brow#7
+    bottom_row_of_h=trow#51
+    midd_c_of_h=mcol
 
-        else:#x is bigger to =trow or smaller than=brow
-            if x>=trow:#bigger or = to top
-                match move:
-                    case (1, 0):  # going down discourage going down
-                        magnitude = magnitude + 10
-                    case (-1, 0):  # going up do nothing
-                        magnitude = magnitude
-                    case (0, 1):  # going right reduce the dinstance
-                        magnitude = magnitude -10
-                    case (0, -1):  # going left give PENALTY!
-                        magnitude = magnitude+5
-                    case _:
-                        magnitude = magnitude
+    mapping={
+    (0, 1): "right",
+    (0, -1): "left",
+    (-1, 0): "up",
+    (1, 0): "down"
+}
+
+    condition1=top_row_of_h<y<midd_c_of_h<gy
+    #condition2=y<top_row_of_h#if the map is square shape ex: [60x60] row_count=col_count and top_row_of_h=top_row_of_y(at least close) if H design dosen't change
+    # we can simplify this to top_row_of_h<y<midd_c_of_h<gy
+    condition2=top_row_of_h<x<bottom_row_of_h
+    move_n = mapping.get(move)
+
+    if condition1:
+        di_f_top=abs(top_row_of_h-x)
+        di_f_bottom=abs(bottom_row_of_h-x)
+        condition3=di_f_bottom>di_f_top
+        if condition2:
+            match move_n:
+                case "right":
+                    return float('inf')
+                case "left":
+                    return magnitude
+                case "up":
+                    if condition3:
+                        return magnitude-top_row_of_h
+                    else:
+                        return magnitude+bottom_row_of_h
+                case "down":
+                        if condition3:
+                            return magnitude + bottom_row_of_h
+                        else:
+                            return magnitude - top_row_of_h
+        else:
+            return magnitude
+    elif x<top_row_of_h:
+        if move_n=="up" or move_n=="down":
+            di_f_top = abs(top_row_of_h - x)
+            di_f_bottom = abs(bottom_row_of_h - x)
+            condition3 = di_f_bottom > di_f_top
+            if move_n=="up" and condition3:
+                return 0
             else:
-                match move:
-                    case (1, 0):  # going down do nothing
-                        magnitude = magnitude
-                    case (-1, 0):  # going up give penalty
-                        magnitude = magnitude+10
-                    case (0, 1):  # going right reduce the dinstance
-                        magnitude = magnitude - 10
-                    case (0, -1):  # going left give PENALTY!
-                        magnitude = magnitude + 5
-                    case _:
-                        magnitude = magnitude
+                if condition3:
+                    return float('inf')
+                else:
+                    return 0
     else:
-        magnitude=magnitude
-    return magnitude
+        return magnitude
 
 """
  a = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9])
